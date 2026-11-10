@@ -7,6 +7,9 @@ import com.nexplay.game.feature.chess.ChessAI
 import com.nexplay.game.feature.chess.ChessState
 import com.nexplay.game.feature.domino.DominoRound
 import com.nexplay.game.feature.domino.Side
+import com.nexplay.game.data.Achievements
+import com.nexplay.game.data.Profile
+import com.nexplay.game.data.Rewards
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -77,5 +80,16 @@ class EnginesTest {
         val t = r.hands[r.turn].first()
         assertTrue(r.play(r.turn, t, Side.RIGHT))
         assertEquals(1, r.table.size)
+    }
+
+    @Test fun rewardsAreOrdered() {
+        assertTrue(Rewards.xp("win") > Rewards.xp("draw"))
+        assertTrue(Rewards.coins("win") > Rewards.coins("loss"))
+        assertEquals(20, Rewards.loginCoins(1))
+        assertEquals(80, Rewards.loginCoins(99))
+    }
+
+    @Test fun newPlayerHasNoAchievements() {
+        assertTrue(Achievements.all.none { it.check(Profile()) })
     }
 }

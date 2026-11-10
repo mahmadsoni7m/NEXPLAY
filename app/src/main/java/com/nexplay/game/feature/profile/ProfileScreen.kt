@@ -6,6 +6,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import com.nexplay.game.data.Achievements
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -56,6 +61,35 @@ fun ProfileScreen() {
                         OutlinedTextField(name, { name = it.take(20) }, label = { Text(S.t("username")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(8.dp))
                         GlowButton(S.t("save"), { scope.launch { repo.setUsername(name) } }, enabled = name.isNotBlank())
+                    }
+                }
+                item {
+                    SectionTitle(S.t("achievements"))
+                }
+                item {
+                    NexCard(Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            HudPill("🪙", "${p.coins}", NexColors.Amber)
+                            Spacer(Modifier.width(8.dp))
+                            HudPill("🔥", "${p.streak}", NexColors.Pink)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        for (rowItems in Achievements.all.chunked(4)) {
+                            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                for (a in rowItems) {
+                                    val unlocked = a.check(p)
+                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Box(
+                                            Modifier.size(52.dp).clip(CircleShape)
+                                                .background(if (unlocked) Brush.linearGradient(listOf(NexColors.Violet, NexColors.Cyan)) else Brush.linearGradient(listOf(Color(0x22FFFFFF), Color(0x11FFFFFF)))),
+                                            contentAlignment = Alignment.Center
+                                        ) { Text(if (unlocked) a.emoji else "🔒", fontSize = 24.sp) }
+                                        Text(S.t(a.nameKey), color = if (unlocked) NexColors.Text else NexColors.TextDim, fontSize = 9.sp, textAlign = TextAlign.Center, maxLines = 2)
+                                    }
+                                }
+                                repeat(4 - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
                     }
                 }
                 items(GameRegistry.games) { g ->

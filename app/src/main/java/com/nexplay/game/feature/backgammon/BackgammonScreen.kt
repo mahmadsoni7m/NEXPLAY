@@ -245,7 +245,8 @@ fun BackgammonScreen(mode: String, level: Int, onExit: () -> Unit) {
                 vm.winner == 1 -> S.t("you_win")
                 else -> S.t("you_lose")
             }
-            ResultDialog(title, null, onNew = { vm.newGame() }, onExit = onExit)
+            ResultDialog(title, null, onNew = { vm.newGame() }, onExit = onExit,
+                outcome = if (mode == "local") null else if (vm.winner == 1) "win" else "loss")
         }
     }
 }

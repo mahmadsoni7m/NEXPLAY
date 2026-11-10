@@ -1,6 +1,12 @@
 package com.nexplay.game.feature.checkers
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -253,7 +259,8 @@ fun CheckersScreen(mode: String, level: Int, onExit: () -> Unit) {
             }
             ResultDialog(title, if (mode == "online" && room != null) "${room!!.delta.let { if (it >= 0) "+$it" else "$it" }} ${S.t("rating")}" else null,
                 onNew = if (mode == "online") null else ({ vm.newGame() }),
-                onExit = { if (mode == "online") repo.online.leaveRoom(); onExit() })
+                onExit = { if (mode == "online") repo.online.leaveRoom(); onExit() },
+                outcome = if (mode == "local") null else if (result == 0) "draw" else if (won) "win" else "loss")
         }
     }
 }
@@ -262,21 +269,32 @@ fun levelName(level: Int): String = when (level) { 0 -> S.t("easy"); 1 -> S.t("m
 
 @Composable
 fun PlayerStrip(name: String, pieces: Int, active: Boolean) {
+    val shape = CutCornerShape(topStart = 12.dp, bottomEnd = 12.dp)
+    val glow by rememberInfiniteTransition(label = "ps").animateFloat(0.3f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "psG")
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-            .background(if (active) Color(0x337C4DFF) else Color(0x14FFFFFF))
+            .clip(shape)
+            .background(
+                if (active) Brush.horizontalGradient(listOf(Color(0x667C4DFF), Color(0x2200E5FF)))
+                else Brush.horizontalGradient(listOf(Color(0x14FFFFFF), Color(0x08FFFFFF)))
+            )
+            .border(1.5.dp, if (active) NexColors.Cyan.copy(alpha = glow) else Color(0x22FFFFFF), shape)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(name, color = NexColors.Text, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1)
+        Text((if (active) "▶ " else "") + name, color = if (active) NexColors.Cyan else NexColors.Text, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f), maxLines = 1)
         Text("● $pieces", color = NexColors.TextDim)
     }
 }
 
 @Composable
 fun CheckerPiece(p: Int, size: androidx.compose.ui.unit.Dp, pulse: Boolean) {
+    key(p) { PopIn { CheckerPieceBody(p, size, pulse) } }
+}
+
+@Composable
+fun CheckerPieceBody(p: Int, size: androidx.compose.ui.unit.Dp, pulse: Boolean) {
     val white = Ck.owner(p) == Ck.W
     val brush = if (white) Brush.radialGradient(listOf(Color(0xFFFFFFFF), Color(0xFFB8C4E8)))
     else Brush.radialGradient(listOf(Color(0xFFFF6E9C), Color(0xFF8E1F4A)))

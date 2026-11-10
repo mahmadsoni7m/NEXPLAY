@@ -286,7 +286,8 @@ fun DominoScreen(mode: String, level: Int, onExit: () -> Unit) {
         if (vm.matchWinner != -1) {
             val w = vm.matchWinner
             val title = if (mode == "ai") (if (w == 0) S.t("you_win") else S.t("you_lose")) else S.t("win_of") + ": " + S.t("player") + " " + (w + 1)
-            ResultDialog(title, "${vm.scores[0]} : ${vm.scores[1]}", onNew = { vm.newMatch() }, onExit = onExit)
+            ResultDialog(title, "${vm.scores[0]} : ${vm.scores[1]}", onNew = { vm.newMatch() }, onExit = onExit,
+                outcome = if (mode == "ai") (if (w == 0) "win" else "loss") else null)
         }
     }
 }

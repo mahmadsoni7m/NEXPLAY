@@ -37,7 +37,11 @@ data class Profile(
     val stats: Map<String, GameStat> = emptyMap(),
     val matches: List<MatchRecord> = emptyList(),
     val notifs: List<String> = emptyList(),
-    val daily: Daily = Daily()
+    val daily: Daily = Daily(),
+    val coins: Int = 0,
+    val streak: Int = 0,
+    val lastLogin: String = "",
+    val canClaimLogin: Boolean = true
 ) {
     val level get() = 1 + xp / 100
     val levelProgress get() = (xp % 100) / 100f
@@ -58,6 +62,9 @@ class Prefs(private val ctx: Context) {
     private val kMatches = stringPreferencesKey("matches")
     private val kNotifs = stringPreferencesKey("notifs")
     private val kDaily = stringPreferencesKey("daily")
+    private val kCoins = intPreferencesKey("coins")
+    private val kStreak = intPreferencesKey("streak")
+    private val kLastLogin = stringPreferencesKey("last_login")
 
     val profile: Flow<Profile> = ctx.dataStore.data.map { toProfile(it) }
 
@@ -103,7 +110,11 @@ class Prefs(private val ctx: Context) {
             stats = stats,
             matches = matches,
             notifs = notifs,
-            daily = daily
+            daily = daily,
+            coins = p[kCoins] ?: 0,
+            streak = p[kStreak] ?: 0,
+            lastLogin = p[kLastLogin] ?: "",
+            canClaimLogin = (p[kLastLogin] ?: "") != today()
         )
     }
 
@@ -151,7 +162,8 @@ class Prefs(private val ctx: Context) {
         }
         it[kMatches] = ma.toString()
 
-        it[kXp] = pr.xp + when (result) { "win" -> 30; "draw" -> 10; else -> 5 }
+        it[kXp] = pr.xp + Rewards.xp(result)
+        it[kCoins] = pr.coins + Rewards.coins(result)
 
         val d = pr.daily
         val nd = d.copy(
@@ -165,7 +177,27 @@ class Prefs(private val ctx: Context) {
     private fun dailyJson(d: Daily) = JSONObject().put("date", d.date).put("played", d.played)
         .put("wins", d.wins).put("med", d.beatMedium).put("claimed", d.claimed)
 
+    /** Daily login chest: streak grows when claimed on consecutive days. Returns coins granted (0 if already claimed). */
+    suspend fun claimLogin(): Int {
+        var granted = 0
+        ctx.dataStore.edit {
+            val pr = toProfile(it)
+            if (!pr.canClaimLogin) return@edit
+            val cal = java.util.Calendar.getInstance()
+            cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
+            val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+            val streak = if (pr.lastLogin == yesterday) pr.streak + 1 else 1
+            granted = Rewards.loginCoins(streak)
+            it[kStreak] = streak
+            it[kLastLogin] = today()
+            it[kCoins] = pr.coins + granted
+            it[kXp] = pr.xp + Rewards.LOGIN_XP
+        }
+        return granted
+    }
+
     suspend fun resetLocal() = ctx.dataStore.edit {
+        it.remove(kCoins); it.remove(kStreak); it.remove(kLastLogin)
         it.remove(kStats); it.remove(kMatches); it.remove(kXp); it.remove(kDaily); it.remove(kNotifs)
     }
 }

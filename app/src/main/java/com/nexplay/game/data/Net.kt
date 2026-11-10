@@ -267,6 +267,7 @@ class Repository(private val prefs: Prefs, private val scope: CoroutineScope) {
     suspend fun clearNotifs() { prefs.clearNotifs() }
     suspend fun claimDaily(bit: Int, xp: Int) { prefs.claimDaily(bit, xp) }
     suspend fun resetLocal() { prefs.resetLocal() }
+    suspend fun claimLogin(): Int = prefs.claimLogin()
 
     suspend fun recordResult(game: String, mode: String, result: String, opponent: String, aiLevel: Int) {
         prefs.record(game, mode, result, opponent, aiLevel)

@@ -57,21 +57,16 @@ fun NexNav() {
     Scaffold(
         containerColor = NexColors.Bg,
         bottomBar = {
-            if (showBar) NavigationBar(containerColor = NexColors.Surface) {
-                val icons = listOf(Icons.Filled.Home, Icons.Filled.PlayArrow, Icons.Filled.Star, Icons.Filled.Person)
-                TABS.forEachIndexed { i, r ->
-                    NavigationBarItem(
-                        selected = route == r,
-                        onClick = { openTab(r) },
-                        icon = { Icon(icons[i], contentDescription = S.t(r)) },
-                        label = { Text(S.t(r)) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = NexColors.Cyan, selectedTextColor = NexColors.Cyan,
-                            indicatorColor = NexColors.SurfaceHi, unselectedIconColor = NexColors.TextDim, unselectedTextColor = NexColors.TextDim
-                        )
-                    )
-                }
-            }
+            if (showBar) GameNavBar(
+                items = listOf(
+                    Triple("home", "🏠", S.t("home")),
+                    Triple("games", "🎮", S.t("games")),
+                    Triple("ranking", "🏆", S.t("ranking")),
+                    Triple("profile", "👤", S.t("profile"))
+                ),
+                selected = route,
+                onSelect = { openTab(it) }
+            )
         }
     ) { pad ->
         NavHost(
@@ -83,7 +78,8 @@ fun NexNav() {
                     onGame = { nav.navigate("setup/$it") },
                     onSettings = { nav.navigate("settings") },
                     onNotifs = { nav.navigate("notifs") },
-                    onLeaderboard = { openTab("ranking") }
+                    onLeaderboard = { openTab("ranking") },
+                    onQuickPlay = { nav.navigate("play/${GameRegistry.games.random().id}/ai/1") }
                 )
             }
             composable("games") { GamesList { nav.navigate("setup/$it") } }

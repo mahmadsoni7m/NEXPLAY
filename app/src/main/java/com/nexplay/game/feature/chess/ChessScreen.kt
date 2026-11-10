@@ -254,6 +254,7 @@ fun ChessScreen(mode: String, level: Int, onExit: () -> Unit) {
                     val p = st.board[sq]
                     if (p != 0) {
                         val white = p > 0
+                        key(p) { PopIn {
                         Text(
                             GLYPH[abs(p) - 1].toString(),
                             style = TextStyle(
@@ -262,6 +263,7 @@ fun ChessScreen(mode: String, level: Int, onExit: () -> Unit) {
                                 shadow = Shadow(if (white) Color(0xFF000000) else Color(0xFFB39DFF), Offset(0f, 0f), 6f)
                             )
                         )
+                        } }
                     }
                     if (sq in dests) {
                         if (p == 0) Box(Modifier.size(cell * 0.3f).clip(CircleShape).background(Color(0xCC00E5FF)))
@@ -331,7 +333,8 @@ fun ChessScreen(mode: String, level: Int, onExit: () -> Unit) {
             }
             ResultDialog(title, sub,
                 onNew = if (mode == "online") null else ({ vm.newGame() }),
-                onExit = { if (mode == "online") repo.online.leaveRoom(); onExit() })
+                onExit = { if (mode == "online") repo.online.leaveRoom(); onExit() },
+                outcome = if (mode == "local") null else if (result == "draw") "draw" else if (result == mine) "win" else "loss")
         }
     }
 }
